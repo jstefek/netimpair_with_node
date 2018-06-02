@@ -1,3 +1,6 @@
+.idea
+netimpair_with_node.iml
+package-lock.json
 # Logs
 logs
 *.log
