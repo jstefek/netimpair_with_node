@@ -10,5 +10,7 @@ RUN apt-get -y update && apt-get -y install python iputils-ping curl \
 
 COPY add/netimpair_with_node /tmp/netimpair_with_node
 
+RUN cd /tmp/netimpair_with_node && npm install
+
 EXPOSE 3333
-CMD /opt/bin/entry_point.sh & cd /tmp/netimpair_with_node && npm run start
+CMD /opt/bin/entry_point.sh & cd /tmp/netimpair_with_node && npm run start > /tmp/node.log
