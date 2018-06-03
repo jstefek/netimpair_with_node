@@ -2,11 +2,141 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script src="jq.js"></script>
+    <link rel="stylesheet" href="w3.css">
 </head>
 <body>
-<div>
-    <p>How to use with jQuery:</p>
-    <code>$.get( "https://localhost:3333/netimpair", {params:'-n eth0 netem --jitter 200 --toggle 100'} );</code>
+<script type="text/javascript">
+
+    function setActive(duration) {
+        $('#ACTIVATE').addClass('w3-disabled').prop('disabled', true);
+        $('#DEACTIVATE').removeClass('w3-disabled').prop('disabled', false);
+        $('#STATE').removeClass('w3-blue').addClass('w3-yellow');
+        var img = $('#STATE > img').addClass('w3-spin');
+        if (duration) {
+            img.attr('title', 'impairment will end at: ' + new Date(Date.now() + duration).toTimeString());
+        }
+    }
+
+    function setInactive() {
+        $('#ACTIVATE').removeClass('w3-disabled').prop('disabled', false);
+        $('#DEACTIVATE').addClass('w3-disabled').prop('disabled', true);
+        $('#STATE').removeClass('w3-yellow').addClass('w3-blue');
+        $('#STATE > img').removeClass('w3-spin').attr('title', '')
+    }
+
+
+    function isActive() {
+        return new Promise(function (resolve, reject) {
+            $.get("/netimpair/isActive", function (data) {
+                resolve(data);
+            });
+        });
+    }
+
+    function deactivate() {
+        return new Promise(function (resolve, reject) {
+            $.get("/netimpair/deactivate", function (data) {
+                resolve(data);
+            });
+        });
+    }
+
+    function getParams() {
+        return {
+            direction: $('#DIRECTION').val(),
+            type: $('#TYPE').val(),
+            value: $('#VALUE').val(),
+            excluded: $('#EXCLUDED').val(),
+            included: $('#INCLUDED').val(),
+            duration: $('#DURATION').val(),
+            networkInterface: $('#INTERFACE').val(),
+        }
+    }
+
+    function activate() {
+        return new Promise(function (resolve, reject) {
+            setActive(Number($('#DURATION').val()) * 1000);
+            $.get("/netimpair/activate", getParams(), function (data) {
+                resolve(data);
+            });
+        });
+    }
+
+    $(function () {
+        function checkActive(isActive) {
+            if (isActive) {
+                setActive();
+            } else {
+                setInactive();
+            }
+        }
+
+        isActive().then(checkActive);
+
+        window.setInterval(function () {
+            isActive().then(checkActive);
+        }, 2000);
+    })
+</script>
+
+<div class="w3-container" style="padding: 2% 6% 2% 6%">
+    <div class="w3-card-4 w3-margin-bottom">
+        <div id="header" class="w3-container w3-padding-small w3-blue">
+            <h2 class="w3-left">Impairment configuration</h2>
+            <div id="STATE" class="w3-right w3-green" style="margin: 5px 0 0 0;padding: 5px">
+                <img src="cog.png" width="40" height="40" class="w3-round w3-right" alt="cog"/>
+            </div>
+        </div>
+        <div class="w3-row-padding">
+            <p class="w3-third">
+                <label for="DIRECTION" class="w3-text-blue">direction</label>
+                <select id="DIRECTION" class="w3-select w3-border w3-round-xlarge">
+                    <option>uplink</option>
+                    <option>downlink</option>
+                </select>
+            </p>
+            <p class="w3-third">
+                <label for="TYPE" class="w3-text-blue">type</label>
+                <select id="TYPE" class="w3-select w3-border w3-round-xlarge">
+                    <option value="loss_ratio">packet loss</option>
+                    <option value="jitter">delay jitter</option>
+                    <option value="limit">bandwidth limit</option>
+                </select>
+            </p>
+            <p class="w3-third">
+                <label for="VALUE" class="w3-text-blue">value [%, ms, kbps]</label>
+                <input id="VALUE" type="text" class="w3-input w3-border w3-round-xlarge" value="100"/>
+            </p>
+            <p class="w3-third">
+                <label for="EXCLUDED" class="w3-text-blue">excluded addresses</label>
+                <input id="EXCLUDED" type="text" class="w3-input w3-border w3-round-xlarge" value=""
+                       placeholder="10.20.30.40, 55.66.77.88, ..."/>
+            </p>
+            <p class="w3-third">
+                <label for="INCLUDED" class="w3-text-blue">included addresses</label>
+                <input id="INCLUDED" type="text" class="w3-input w3-border w3-round-xlarge" value=""
+                       placeholder="10.20.30.40, 55.66.77.88, ..."/>
+            </p>
+            <p class="w3-third">
+                <label for="DURATION" class="w3-text-blue">duration [seconds]</label>
+                <input id="DURATION" type="number" min="10" max="1000" class="w3-input w3-border w3-round-xlarge"
+                       value="100"/>
+            </p>
+            <p class="w3-third">
+                <label for="INTERFACE" class="w3-text-blue">network interface</label>
+                <input id="INTERFACE" type="text" class="w3-input w3-border w3-round-xlarge" disabled="true"
+                       value="eth0"/>
+            </p>
+            <div class="w3-row w3-margin-bottom w3-margin-top">
+                <button id="ACTIVATE" class="w3-button w3-green w3-round-xlarge" onclick="activate()">activate
+                </button>
+                <button id="DEACTIVATE" disabled="disabled" class="w3-button w3-yellow w3-round-xlarge w3-disabled"
+                        onclick="deactivate()">deactivate
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 </html>

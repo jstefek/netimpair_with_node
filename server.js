@@ -1,27 +1,28 @@
 var express = require('express'),
     app = express(),
-    port = process.env.PORT || 3333,
+    portHTTP = process.env.PORT_HTTP || 3333,
+    portHTTPS = process.env.PORT_HTTPS || 3334,
     bodyParser = require('body-parser'),
     route = require('./api/routes/route'),
     https = require('https'),
+    http = require('http'),
     fs = require('fs');
 
 app.use(bodyParser.urlencoded({extended: true}));
-
 app.use(express.static("public"));
-
 route(app);
 
-var options = {
+httpsOptions = {
     key: fs.readFileSync(__dirname + '/localhost.key'),
     cert: fs.readFileSync(__dirname + '/localhost.crt'),
     requestCert: false,
     rejectUnauthorized: false
-};
-
-var server = https.createServer(options, app).listen(port, function () {
-    console.log("server started at port " + port);
+}
+https.createServer(httpsOptions, app).listen(portHTTPS, function () {
+    console.log("server listens at https://localhost:" + portHTTPS);
 });
 
-
+http.createServer(app).listen(portHTTP, function () {
+    console.log("server listens at http://localhost:" + portHTTP);
+});
 
