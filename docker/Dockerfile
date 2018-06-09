@@ -1,20 +1,32 @@
-FROM selenium/node-chrome-debug:3.7.1
+FROM selenium/node-chrome-debug:3.12.0
 
-# run as root to use netimpair commands
+# run as root to be able to use netimpair commands
 USER root
 
-# install python, ping, curl, nodejs
-RUN apt-get -y update && apt-get -y install python iputils-ping curl \
-    && curl --silent --location https://deb.nodesource.com/setup_8.x | bash -  \
-    && apt-get install -y nodejs
+COPY add/netimpair_with_node /opt/netimpair_with_node
 
-ENV PORT_HTTP=80 PORT_HTTPS=443
+RUN apt-get -y update \
+    `## install python ping and curl` \
+    && apt-get -y install python iputils-ping curl \
+    `## get node v10` \
+    && curl --silent --location https://deb.nodesource.com/setup_10.x | bash - \
+    `## install node` \
+    && apt-get install -y nodejs \
+    `## install dependencies of netimpair service` \
+    && cd /opt/netimpair_with_node && npm install \
+    `## cleanup` \
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
+ENV PORT_HTTP=80 PORT_HTTPS=443 VNC_PASSWORD=secret
+
+# expose netimpair service ports
 EXPOSE $PORT_HTTP
 EXPOSE $PORT_HTTPS
 
-COPY add/netimpair_with_node /tmp/netimpair_with_node
-
-RUN cd /tmp/netimpair_with_node && npm install
-
-CMD /opt/bin/entry_point.sh & cd /tmp/netimpair_with_node && npm run start > /tmp/node.log
+# entrypoint command
+CMD `## setup vnc password` \
+    mkdir -p ~/.vnc && x11vnc -storepasswd $VNC_PASSWORD ~/.vnc/passwd \
+    `## run selenium node service (with starting up the vnc)` \
+    && /opt/bin/entry_point.sh > /var/log/selenium.log \
+    `## run netimpair service` \
+    & cd /opt/netimpair_with_node && npm run start > /var/log/node.log

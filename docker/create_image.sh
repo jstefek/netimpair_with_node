@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+rm -rf add
 mkdir add
 mkdir add/netimpair_with_node
 cp -r ../api add/netimpair_with_node/api
@@ -10,5 +11,5 @@ cp  ../readme.md add/netimpair_with_node/
 cp  ../server.js add/netimpair_with_node/
 cp  ../localhost.crt add/netimpair_with_node/
 cp  ../localhost.key add/netimpair_with_node/
-docker build -f Dockerfile -t netimpair-with-node:3.7.1 .
+docker build -f Dockerfile -t netimpair-with-node:3.12.0 .
 rm -rf add
