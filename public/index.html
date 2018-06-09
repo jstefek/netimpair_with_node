@@ -11,7 +11,6 @@
     function setActive(duration) {
         $('#ACTIVATE').addClass('w3-disabled').prop('disabled', true);
         $('#DEACTIVATE').removeClass('w3-disabled').prop('disabled', false);
-        $('#STATE').removeClass('w3-blue').addClass('w3-yellow');
         var img = $('#STATE > img').addClass('w3-spin');
         if (duration) {
             img.attr('title', 'impairment will end at: ' + new Date(Date.now() + duration).toTimeString());
@@ -21,8 +20,7 @@
     function setInactive() {
         $('#ACTIVATE').removeClass('w3-disabled').prop('disabled', false);
         $('#DEACTIVATE').addClass('w3-disabled').prop('disabled', true);
-        $('#STATE').removeClass('w3-yellow').addClass('w3-blue');
-        $('#STATE > img').removeClass('w3-spin').attr('title', '')
+        $('#STATE > img').removeClass('w3-spin').attr('title', 'network impairment is inactive')
     }
 
 
@@ -84,8 +82,8 @@
     <div class="w3-card-4 w3-margin-bottom">
         <div id="header" class="w3-container w3-padding-small w3-blue">
             <h2 class="w3-left">Impairment configuration</h2>
-            <div id="STATE" class="w3-right w3-green" style="margin: 5px 0 0 0;padding: 5px">
-                <img src="cog.png" width="40" height="40" class="w3-round w3-right" alt="cog"/>
+            <div id="STATE" class="w3-right" style="margin: 5px 0 0 0;padding: 5px">
+                <img src="cog.png" width="40" height="40" class="w3-round" alt="cog"/>
             </div>
         </div>
         <div class="w3-row-padding">
