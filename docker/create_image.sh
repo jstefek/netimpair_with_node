@@ -4,7 +4,6 @@ mkdir add
 mkdir add/netimpair_with_node
 cp -r ../api add/netimpair_with_node/api
 cp -r ../public add/netimpair_with_node/public
-cp -r ../node_modules add/netimpair_with_node/node_modules
 cp  ../LICENSE add/netimpair_with_node/
 cp  ../package.json add/netimpair_with_node/
 cp  ../readme.md add/netimpair_with_node/

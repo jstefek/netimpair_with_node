@@ -3,17 +3,13 @@ FROM selenium/node-chrome-debug:3.12.0
 # run as root to be able to use netimpair commands
 USER root
 
-COPY add/netimpair_with_node /opt/netimpair_with_node
-
 RUN apt-get -y update \
     `## install python ping, ifconfig and curl` \
     && apt-get -y install python iputils-ping net-tools kmod curl \
-    `## get node v10` \
+    `## get node` \
     && curl --silent --location https://deb.nodesource.com/setup_10.x | bash - \
     `## install node` \
     && apt-get install -y nodejs \
-    `## install dependencies of netimpair service` \
-    && cd /opt/netimpair_with_node && npm install \
     `## cleanup` \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
@@ -22,6 +18,11 @@ ENV PORT_VNC=5900 PORT_HTTP=80 PORT_HTTPS=443 VNC_PASSWORD=secret
 # expose netimpair service ports
 EXPOSE $PORT_HTTP
 EXPOSE $PORT_HTTPS
+
+COPY add/netimpair_with_node /opt/netimpair_with_node
+
+# install dependencies of netimpair service
+RUN cd /opt/netimpair_with_node && npm install
 
 # entrypoint command
 CMD `## setup vnc password` \

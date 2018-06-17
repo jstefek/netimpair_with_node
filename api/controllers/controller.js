@@ -1,6 +1,7 @@
 'use strict';
-var exec = require('child_process').exec,
-    executable = __dirname + '/netimpair.py',
+const {spawn, exec} = require('child_process');
+
+var executable = __dirname + '/netimpair.py',
     active = false,
     PORT_HTTPS = process.env.PORT_HTTPS || 443,
     PORT_HTTP = process.env.PORT_HTTP || 80,
@@ -19,11 +20,12 @@ function parseArray(str) {
     if (!str) {
         result = [];
     } else {
-        var result = str.split(',').forEach(function (value) {
+        var result = str.split(',').map(function (value) {
             // trim
             return value.replace(/^\s+|\s+$/g, '');
+        }).filter(function (value) {
+            return !!value;
         });
-        result = !!result ? result : [];
     }
     return result;
 }
@@ -47,13 +49,13 @@ function buildCommandParams(query) {
     if (included.length === 0) {
         // exclude all given addresses
         excluded.forEach(function (val) {
-            if (val.match(SPEC_REGEX)) {
+            if (SPEC_REGEX.test(val)) {
                 command.push('--exclude ' + val);
             } else {
-                if (val.match(IP_REGEX)) {
+                if (IP_REGEX.test(val)) {
                     command.push('--exclude src=' + val);
                     command.push('--exclude dst=' + val);
-                } else if (val.match(PORT_REGEX)) {
+                } else if (PORT_REGEX.test(val)) {
                     command.push('--exclude sport=' + val);
                     command.push('--exclude dport=' + val);
                 }
@@ -63,19 +65,20 @@ function buildCommandParams(query) {
             }
         });
     }
+
     included.forEach(function (val) {
-        if (val.match(SPEC_REGEX)) {
+        if (SPEC_REGEX.test(val)) {
             command.push('--include ' + val);
         } else {
-            if (val.match(IP_REGEX)) {
+            if (IP_REGEX.test(val)) {
                 command.push('--include src=' + val);
                 command.push('--include dst=' + val);
-            } else if (val.match(PORT_REGEX)) {
+            } else if (PORT_REGEX.test(val)) {
                 command.push('--include sport=' + val);
                 command.push('--include dport=' + val);
             }
             else {
-                throw 'UNKNOWN value to exclude: <' + val + '>';
+                throw 'UNKNOWN value to include: <' + val + '>';
             }
         }
     });
@@ -102,30 +105,29 @@ exports.activate = function (req, res) {
         var command = 'python ' + executable + ' ' + buildCommandParams(req.query);
         console.log(command);
 
-        netimpairProcess = exec(command, function (err, stdout, stderr) {
-            if (err) {
-                console.log(err);
-                console.log(stderr);
-                res.status(500).send(stderr);
-                active = false;
-            } else {
-                console.log(stdout);
-                res.status(200).send('done');
-            }
+        netimpairProcess = spawn(command, {shell: true});
+
+        netimpairProcess.stdout.on('data', function (data) {
+            console.log(`out: ${data}`);
         });
 
+        netimpairProcess.stderr.on('data', function (data) {
+            console.log(`err: ${data}`);
+        });
         netimpairProcess.on('close', function (code, signal) {
+            console.log(`close, ${code}, ${signal}`);
             active = false;
         });
-        netimpairProcess.on('exit', function (code, signal) {
-            active = false;
-        });
+        res.status(200).send('command executed');
     }
 };
 
 exports.deactivate = function (req, res) {
     if (active) {
-        netimpairProcess.kill('SIGTERM');
+        console.log('killing');
+        // netimpairProcess.kill('SIGTERM');
+        exec(`pkill python`);
+        netimpairProcess = undefined;
         res.status(200).send('deactivated')
     } else {
         res.status(200).send('already deactivated')
