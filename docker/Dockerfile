@@ -6,8 +6,8 @@ USER root
 COPY add/netimpair_with_node /opt/netimpair_with_node
 
 RUN apt-get -y update \
-    `## install python ping and curl` \
-    && apt-get -y install python iputils-ping curl \
+    `## install python ping, ifconfig and curl` \
+    && apt-get -y install python iputils-ping net-tools kmod curl \
     `## get node v10` \
     && curl --silent --location https://deb.nodesource.com/setup_10.x | bash - \
     `## install node` \
@@ -17,7 +17,7 @@ RUN apt-get -y update \
     `## cleanup` \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
-ENV PORT_HTTP=80 PORT_HTTPS=443 VNC_PASSWORD=secret
+ENV PORT_VNC=5900 PORT_HTTP=80 PORT_HTTPS=443 VNC_PASSWORD=secret
 
 # expose netimpair service ports
 EXPOSE $PORT_HTTP

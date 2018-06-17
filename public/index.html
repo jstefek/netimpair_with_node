@@ -42,7 +42,6 @@
 
     function getParams() {
         return {
-            direction: $('#DIRECTION').val(),
             type: $('#TYPE').val(),
             value: $('#VALUE').val(),
             excluded: $('#EXCLUDED').val(),
@@ -72,6 +71,24 @@
 
         isActive().then(checkActive);
 
+        var $type = $('#TYPE');
+        $type.on('change', function () {
+            var val = $type.val(), unit;
+            switch (val) {
+                case 'loss_ratio':
+                    unit = '%';
+                    break;
+                case 'jitter':
+                    unit = 'ms';
+                    break;
+                case 'limit':
+                    unit = 'kbps';
+                    break;
+                default:
+                    throw 'Unsupported switch value <' + val + '>'
+            }
+            $("label[for='VALUE']").text('value [' + unit + ']');
+        });
         window.setInterval(function () {
             isActive().then(checkActive);
         }, 2000);
@@ -88,13 +105,6 @@
         </div>
         <div class="w3-row-padding">
             <p class="w3-third">
-                <label for="DIRECTION" class="w3-text-blue">direction</label>
-                <select id="DIRECTION" class="w3-select w3-border w3-round-xlarge">
-                    <option>uplink</option>
-                    <option>downlink</option>
-                </select>
-            </p>
-            <p class="w3-third">
                 <label for="TYPE" class="w3-text-blue">type</label>
                 <select id="TYPE" class="w3-select w3-border w3-round-xlarge">
                     <option value="loss_ratio">packet loss</option>
@@ -107,19 +117,29 @@
                 <input id="VALUE" type="text" class="w3-input w3-border w3-round-xlarge" value="100"/>
             </p>
             <p class="w3-third">
-                <label for="EXCLUDED" class="w3-text-blue">excluded addresses</label>
-                <input id="EXCLUDED" type="text" class="w3-input w3-border w3-round-xlarge" value=""
-                       placeholder="10.20.30.40, 55.66.77.88, ..."/>
-            </p>
-            <p class="w3-third">
-                <label for="INCLUDED" class="w3-text-blue">included addresses</label>
-                <input id="INCLUDED" type="text" class="w3-input w3-border w3-round-xlarge" value=""
-                       placeholder="10.20.30.40, 55.66.77.88, ..."/>
-            </p>
-            <p class="w3-third">
                 <label for="DURATION" class="w3-text-blue">duration [seconds]</label>
                 <input id="DURATION" type="number" min="10" max="1000" class="w3-input w3-border w3-round-xlarge"
                        value="100"/>
+            </p>
+            <p class="w3-half">
+                <label for="EXCLUDED_IPS" class="w3-text-blue">excluded IP(s)</label>
+                <input id="EXCLUDED_IPS" type="text" class="w3-input w3-border w3-round-xlarge" value=""
+                       placeholder="comma separated IPs, e.g.: src=10.20.30.40, dst=55.66.77.88, 1.2.3.4"/>
+            </p>
+            <p class="w3-half">
+                <label for="EXCLUDED_PORTS" class="w3-text-blue">excluded port(s)</label>
+                <input id="EXCLUDED_PORTS" type="text" class="w3-input w3-border w3-round-xlarge" value=""
+                       placeholder="comma separated numbers, e.g.: dport=80, sport=21, 5900"/>
+            </p>
+            <p class="w3-half">
+                <label for="INCLUDED_IPS" class="w3-text-blue">included IP(s)</label>
+                <input id="INCLUDED_IPS" type="text" class="w3-input w3-border w3-round-xlarge" value=""
+                       placeholder="comma separated IPs, e.g.: src=10.20.30.40, dst=55.66.77.88, 1.2.3.4"/>
+            </p>
+            <p class="w3-half">
+                <label for="INCLUDED_PORTS" class="w3-text-blue">included port(s)</label>
+                <input id="INCLUDED_PORTS" type="text" class="w3-input w3-border w3-round-xlarge" value=""
+                       placeholder="comma separated numbers, e.g.: dport=80, sport=21, 5900"/>
             </p>
             <p class="w3-third">
                 <label for="INTERFACE" class="w3-text-blue">network interface</label>
