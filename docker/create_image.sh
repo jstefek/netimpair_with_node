@@ -2,6 +2,7 @@
 rm -rf add
 mkdir add
 mkdir add/netimpair_with_node
+cp  setTZ.sh add/netimpair_with_node/
 cp -r ../api add/netimpair_with_node/api
 cp -r ../public add/netimpair_with_node/public
 cp  ../LICENSE add/netimpair_with_node/

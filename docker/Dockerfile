@@ -13,7 +13,7 @@ RUN apt-get -y update \
     `## cleanup` \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
-ENV PORT_VNC=5900 PORT_HTTP=80 PORT_HTTPS=443 VNC_PASSWORD=secret
+ENV PORT_VNC=5900 PORT_HTTP=80 PORT_HTTPS=443 VNC_PASSWORD=secret SET_CONTAINER_TIMEZONE=false CONTAINER_TIMEZONE=UTC
 
 # expose netimpair service ports
 EXPOSE $PORT_HTTP
@@ -27,7 +27,9 @@ RUN cd /opt/netimpair_with_node && npm install
 # entrypoint command
 CMD `## setup vnc password` \
     mkdir -p ~/.vnc && x11vnc -storepasswd $VNC_PASSWORD ~/.vnc/passwd \
+    `## setup timezone` \
+    && /opt/netimpair_with_node/setTZ.sh > /var/log/tz.log \
     `## run selenium node service (with starting up the vnc)` \
-    && /opt/bin/entry_point.sh > /var/log/selenium.log \
+    & /opt/bin/entry_point.sh > /var/log/selenium.log \
     `## run netimpair service` \
     & cd /opt/netimpair_with_node && npm run start > /var/log/node.log
