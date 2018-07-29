@@ -42,6 +42,7 @@
 
     function getParams() {
         return {
+            direction: $('#DIRECTION').val(),
             type: $('#TYPE').val(),
             value: $('#VALUE').val(),
             excluded: $('#EXCLUDED').val(),
@@ -110,6 +111,13 @@
                     <option value="loss_ratio">packet loss</option>
                     <option value="jitter">delay jitter</option>
                     <option value="limit">bandwidth limit</option>
+                </select>
+            </p>
+            <p class="w3-third">
+                <label for="DIRECTION" class="w3-text-blue">direction</label>
+                <select id="DIRECTION" class="w3-select w3-border w3-round-xlarge">
+                    <option>uplink</option>
+                    <option>downlink</option>
                 </select>
             </p>
             <p class="w3-third">

@@ -31,7 +31,7 @@ function parseArray(str) {
 }
 
 function buildCommandParams(query) {
-    // var isDownlink = query.direction === 'downlink';
+    var isDownlink = query.direction === 'downlink';
     var excluded = parseArray(query.excluded);
 
     excluded.push(PORT_SELENIUM_HUB);
@@ -82,9 +82,9 @@ function buildCommandParams(query) {
             }
         }
     });
-    // if (isDownlink) {
-    //     command.push('--inbound');
-    // }
+    if (isDownlink) {
+        command.push('--inbound');
+    }
     command.push((type === 'limit' ? 'rate ' : 'netem') + ' --' + type + ' ' + query.value);
     command.push('--toggle ' + query.duration);
     return command.join(' ');
