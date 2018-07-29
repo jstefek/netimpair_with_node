@@ -61,7 +61,27 @@
         });
     }
 
+    function initNetworkInterfaces() {
+        new Promise(function (resolve, reject) {
+            $.get("/networkInterfaces", function (data) {
+                resolve(data);
+            });
+        }).then(function (interfaces) {
+            var $element = $('#INTERFACE');
+            for (var i in interfaces) {
+                var name = interfaces[i];
+                if (name === "eth0" || name === "enp0s25") {
+                    $('<option selected>' + interfaces[i] + '</option>').appendTo($element);
+                } else {
+                    $('<option>' + interfaces[i] + '</option>').appendTo($element);
+                }
+            }
+        });
+    }
+
     $(function () {
+        initNetworkInterfaces();
+
         function checkActive(isActive) {
             if (isActive) {
                 setActive();
@@ -90,6 +110,7 @@
             }
             $("label[for='VALUE']").text('value [' + unit + ']');
         });
+
         window.setInterval(function () {
             isActive().then(checkActive);
         }, 2000);
@@ -141,8 +162,8 @@
             </p>
             <p class="w3-third">
                 <label for="INTERFACE" class="w3-text-blue">network interface</label>
-                <input id="INTERFACE" type="text" class="w3-input w3-border w3-round-xlarge" disabled="true"
-                       value="eth0"/>
+                <select id="INTERFACE" type="text" class="w3-select w3-border w3-round-xlarge">
+                </select>
             </p>
             <div class="w3-row w3-margin-bottom w3-margin-top">
                 <button id="ACTIVATE" class="w3-button w3-green w3-round-xlarge" onclick="activate()">activate

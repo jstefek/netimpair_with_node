@@ -1,5 +1,11 @@
 'use strict';
 const {spawn, exec} = require('child_process');
+const networkInterfacesJson = require('os').networkInterfaces();
+
+var networkInterfaces = [];
+for (var i in networkInterfacesJson) {
+    networkInterfaces.push(i);
+}
 
 var executable = __dirname + '/netimpair.py',
     active = false,
@@ -133,6 +139,10 @@ exports.deactivate = function (req, res) {
         res.status(200).send('already deactivated')
     }
     active = false;
+};
+
+exports.networkInterfaces = function (req, res) {
+    res.status(200).send(networkInterfaces);
 };
 
 

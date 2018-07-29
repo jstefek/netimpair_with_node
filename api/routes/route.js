@@ -6,4 +6,5 @@ module.exports = function (app) {
     app.route('/netimpair/isActive').get(controller.isActive);
     app.route('/netimpair/activate').get(controller.activate);
     app.route('/netimpair/deactivate').get(controller.deactivate);
+    app.route('/networkInterfaces').get(controller.networkInterfaces);
 };
