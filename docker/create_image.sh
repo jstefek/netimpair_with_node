@@ -10,5 +10,12 @@ cp  ../readme.md add/netimpair_with_node/
 cp  ../server.js add/netimpair_with_node/
 cp  ../localhost.crt add/netimpair_with_node/
 cp  ../localhost.key add/netimpair_with_node/
-docker build -f Dockerfile -t netimpair-with-node:3.12.0 .
-rm -rf add
+
+# build node image
+docker build -f Dockerfile.node -t netimpair-with-node:3.141.59-bismuth .
+
+# build router image
+docker build -f Dockerfile.router -t router-with-node:0.5 .
+
+# remove dangling images
+yes | docker image prune

@@ -1,11 +1,11 @@
-FROM selenium/node-chrome-debug:3.12.0
+FROM ubuntu:xenial-20181113
 
 # run as root to be able to use netimpair commands
 USER root
 
 RUN apt-get -y update \
-    `## install python ping, ifconfig and curl` \
-    && apt-get -y install python iputils-ping net-tools kmod curl \
+    `## install python ping, ifconfig, curl, iptables...` \
+    && apt-get -y install python iputils-ping net-tools iproute2 curl iptables dnsutils traceroute speedtest-cli \
     `## get node` \
     && curl --silent --location https://deb.nodesource.com/setup_10.x | bash - \
     `## install node` \
@@ -13,7 +13,7 @@ RUN apt-get -y update \
     `## cleanup` \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
-ENV PORT_VNC=5900 PORT_HTTP=80 PORT_HTTPS=443 VNC_PASSWORD=secret
+ENV PORT_HTTP=3333 PORT_HTTPS=3334
 
 # expose netimpair service ports
 EXPOSE $PORT_HTTP
@@ -25,9 +25,7 @@ COPY add/netimpair_with_node /opt/netimpair_with_node
 RUN cd /opt/netimpair_with_node && npm install
 
 # entrypoint command
-CMD `## setup vnc password` \
-    mkdir -p ~/.vnc && x11vnc -storepasswd $VNC_PASSWORD ~/.vnc/passwd \
-    `## run selenium node service (with starting up the vnc)` \
-    && /opt/bin/entry_point.sh > /var/log/selenium.log \
+CMD `## apply routing of packets` \
+    && iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE \
     `## run netimpair service` \
     & cd /opt/netimpair_with_node && npm run start > /var/log/node.log

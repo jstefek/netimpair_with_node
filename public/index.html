@@ -11,7 +11,7 @@
     function setActive(duration) {
         $('#ACTIVATE').addClass('w3-disabled').prop('disabled', true);
         $('#DEACTIVATE').removeClass('w3-disabled').prop('disabled', false);
-        var img = $('#STATE > img').addClass('w3-spin');
+        let img = $('#STATE > img').addClass('w3-spin');
         if (duration) {
             img.attr('title', 'impairment will end at: ' + new Date(Date.now() + duration).toTimeString());
         }
@@ -23,6 +23,13 @@
         $('#STATE > img').removeClass('w3-spin').attr('title', 'network impairment is inactive')
     }
 
+    function setRouting() {
+        $('#STOP_ROUTING').removeClass('w3-disabled').prop('disabled', false);
+    }
+
+    function setNotRouting() {
+        $('#STOP_ROUTING').addClass('w3-disabled').prop('disabled', true);
+    }
 
     function isActive() {
         return new Promise(function (resolve, reject) {
@@ -32,9 +39,25 @@
         });
     }
 
+    function isRouting() {
+        return new Promise(function (resolve, reject) {
+            $.get("/netimpair/isRouting", function (data) {
+                resolve(data);
+            });
+        });
+    }
+
     function deactivate() {
         return new Promise(function (resolve, reject) {
             $.get("/netimpair/deactivate", function (data) {
+                resolve(data);
+            });
+        });
+    }
+
+    function stopRouting() {
+        return new Promise(function (resolve, reject) {
+            $.get("/netimpair/stopRouting", function (data) {
                 resolve(data);
             });
         });
@@ -67,10 +90,10 @@
                 resolve(data);
             });
         }).then(function (interfaces) {
-            var $element = $('#INTERFACE');
-            for (var i in interfaces) {
-                var name = interfaces[i];
-                if (name === "eth0" || name === "enp0s25") {
+            let $element = $('#INTERFACE');
+            for (let i in interfaces) {
+                let name = interfaces[i];
+                if (name === "eth0" || name.indexOf('0') > 0) {
                     $('<option selected>' + interfaces[i] + '</option>').appendTo($element);
                 } else {
                     $('<option>' + interfaces[i] + '</option>').appendTo($element);
@@ -90,11 +113,20 @@
             }
         }
 
-        isActive().then(checkActive);
+        function checkRouting(isRouting) {
+            if (isRouting) {
+                setRouting();
+            } else {
+                setNotRouting();
+            }
+        }
 
-        var $type = $('#TYPE');
+        isActive().then(checkActive);
+        isRouting().then(checkRouting);
+
+        let $type = $('#TYPE');
         $type.on('change', function () {
-            var val = $type.val(), unit;
+            let val = $type.val(), unit;
             switch (val) {
                 case 'loss_ratio':
                     unit = '%';
@@ -113,6 +145,7 @@
 
         window.setInterval(function () {
             isActive().then(checkActive);
+            isRouting().then(checkRouting);
         }, 2000);
     })
 </script>
@@ -170,6 +203,10 @@
                 </button>
                 <button id="DEACTIVATE" disabled="disabled" class="w3-button w3-yellow w3-round-xlarge w3-disabled"
                         onclick="deactivate()">deactivate
+                </button>
+                <button class="w3-button w3-yellow w3-round-xlarge w3-disabled" disabled="disabled" id="STOP_ROUTING"
+                        onclick="stopRouting()"
+                        title="stop routing of packets through ROUTER">stop routing
                 </button>
             </div>
         </div>
