@@ -1,148 +1,68 @@
 'use strict';
-const {spawn, exec} = require('child_process');
-const networkInterfacesJson = require('os').networkInterfaces();
+const networkInterfacesJson = require('os').networkInterfaces(),
+    ip = require("ip").address(),
+    {NetworkImpairment} = require('../helpers/networkImpairment'),
+    {spawn} = require('child_process'),
+    networkInterfaces = [];
+let active = false, impairment;
 
-var networkInterfaces = [];
-for (var i in networkInterfacesJson) {
+let cmds = [];
+cmds.push('touch /var/log/node.log');
+cmds.push('touch /var/log/selenium.log');
+cmds.push('chown seluser /var/log/selenium.log');
+cmds.push('chown seluser /var/log/node.log');
+cmds.push("su seluser -c 'mkdir -p ~/.vnc && x11vnc -storepasswd $VNC_PASSWORD ~/.vnc/passwd && /opt/bin/entry_point.sh > /var/log/selenium.log'");
+
+spawn(cmds.join(' && '), {shell: true});
+
+console.log(`local ip: ${ip}`);
+
+for (let i in networkInterfacesJson) {
     networkInterfaces.push(i);
 }
 
-var executable = __dirname + '/netimpair.py',
-    active = false,
-    PORT_HTTPS = process.env.PORT_HTTPS || 443,
-    PORT_HTTP = process.env.PORT_HTTP || 80,
-    PORT_VNC = process.env.PORT_VNC || 5900,
-    PORT_SELENIUM_HUB = process.env.HUB_PORT_4444_TCP_PORT || 4444,
-    PORT_SELENIUM_NODE = process.env.NODE_PORT || 5555,
-    IP_REGEX = /^\d+\.\d+\.\d+\.\d+$/,
-    PORT_REGEX = /^\d+$/,
-    SPEC_REGEX = /^(src|dst|sport|dport)=/,
-    netimpairProcess;
-
-/**
- * Returns an array, either empty or with parsed values
- */
-function parseArray(str) {
-    if (!str) {
-        result = [];
-    } else {
-        var result = str.split(',').map(function (value) {
-            // trim
-            return value.replace(/^\s+|\s+$/g, '');
-        }).filter(function (value) {
-            return !!value;
-        });
-    }
-    return result;
-}
-
-function buildCommandParams(query) {
-    var isDownlink = query.direction === 'downlink';
-    var excluded = parseArray(query.excluded);
-
-    excluded.push(PORT_SELENIUM_HUB);
-    excluded.push(PORT_SELENIUM_NODE);
-    excluded.push(PORT_HTTP);
-    excluded.push(PORT_HTTPS);
-    excluded.push(PORT_VNC);
-
-    var included = parseArray(query.included);
-    var type = query.type;
-
-    var command = [];
-    command.push('-n ' + query.networkInterface);
-
-    if (included.length === 0) {
-        // exclude all given addresses
-        excluded.forEach(function (val) {
-            if (SPEC_REGEX.test(val)) {
-                command.push('--exclude ' + val);
-            } else {
-                if (IP_REGEX.test(val)) {
-                    command.push('--exclude src=' + val);
-                    command.push('--exclude dst=' + val);
-                } else if (PORT_REGEX.test(val)) {
-                    command.push('--exclude sport=' + val);
-                    command.push('--exclude dport=' + val);
-                }
-                else {
-                    throw 'UNKNOWN value to exclude: <' + val + '>';
-                }
-            }
-        });
-    }
-
-    included.forEach(function (val) {
-        if (SPEC_REGEX.test(val)) {
-            command.push('--include ' + val);
-        } else {
-            if (IP_REGEX.test(val)) {
-                command.push('--include src=' + val);
-                command.push('--include dst=' + val);
-            } else if (PORT_REGEX.test(val)) {
-                command.push('--include sport=' + val);
-                command.push('--include dport=' + val);
-            }
-            else {
-                throw 'UNKNOWN value to include: <' + val + '>';
-            }
-        }
-    });
-    if (isDownlink) {
-        command.push('--inbound');
-    }
-    command.push((type === 'limit' ? 'rate ' : 'netem') + ' --' + type + ' ' + query.value);
-    command.push('--toggle ' + query.duration);
-    return command.join(' ');
+function isImpairmentActive() {
+    return !!impairment && impairment.isActive();
 }
 
 exports.isActive = function (req, res) {
-    res.status(200).send(active);
+    res.status(200).send(!!impairment && impairment.isActive());
 };
 
 exports.activate = function (req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-
-    if (active) {
+    if (isImpairmentActive()) {
         res.status(400).send('already active');
     } else {
-        active = true;
-
-        var command = 'python ' + executable + ' ' + buildCommandParams(req.query);
-        console.log(command);
-
-        netimpairProcess = spawn(command, {shell: true});
-
-        netimpairProcess.stdout.on('data', function (data) {
-            console.log(`out: ${data}`);
+        impairment = new NetworkImpairment(req.query);
+        impairment.activate().then(function () {
+            res.status(200).send('command executed');
+        }).catch(function (err) {
+            res.status(500).send('impairment was not set');
+            console.log(err)
         });
-
-        netimpairProcess.stderr.on('data', function (data) {
-            console.log(`err: ${data}`);
-        });
-        netimpairProcess.on('close', function (code, signal) {
-            console.log(`close, ${code}, ${signal}`);
-            active = false;
-        });
-        res.status(200).send('command executed');
     }
 };
 
 exports.deactivate = function (req, res) {
-    if (active) {
-        console.log('killing');
-        // netimpairProcess.kill('SIGTERM');
-        exec(`pkill python`);
-        netimpairProcess = undefined;
-        res.status(200).send('deactivated')
+    if (isImpairmentActive()) {
+        impairment.deactivate().then(function () {
+            res.status(200).send('deactivated');
+        }).catch(function (err) {
+            console.log(err);
+            res.status(500).send('problem with deactivation');
+        });
     } else {
+        console.log('already deactivated');
         res.status(200).send('already deactivated')
     }
     active = false;
 };
 
-exports.networkInterfaces = function (req, res) {
+exports.getNetworkInterfaces = function (req, res) {
     res.status(200).send(networkInterfaces);
 };
 
-
+exports.getIP = function (req, res) {
+    res.status(200).send(ip);
+};

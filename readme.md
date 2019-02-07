@@ -24,6 +24,10 @@ There are 3 ports, which CAN be mapped (http and https ports should not be neces
 
 The option `cap-add=NET_ADMIN` is *mandatory*, without it, you cannot manage the network.
 
+#### Start the service
+Because the netimpair needs to be run with root privileges, you have to start the service separately by:
+`docker exec -u root my-node /opt/netimpair_with_node/start.sh &`
+
 ##### Changeable defaults
 In case you need to change the default http or https ports, pass an environment variable(s) to run command for the node.
 The variables are named `PORT_HTTP` and `PORT_HTTPS` (e.g. `docker run -e PORT_HTTP=1234 ...`).  

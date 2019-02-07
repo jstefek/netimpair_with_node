@@ -1,4 +1,4 @@
-var express = require('express'),
+const express = require('express'),
     app = express(),
     portHTTP = process.env.PORT_HTTP || 3333,
     portHTTPS = process.env.PORT_HTTPS || 3334,
@@ -17,7 +17,7 @@ httpsOptions = {
     cert: fs.readFileSync(__dirname + '/localhost.crt'),
     requestCert: false,
     rejectUnauthorized: false
-}
+};
 https.createServer(httpsOptions, app).listen(portHTTPS, function () {
     console.log("server listens at https://localhost:" + portHTTPS);
 });
